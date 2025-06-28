@@ -14,23 +14,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const ip =
-      req.headers["x-forwarded-for"] ||
-      req.headers["x-real-ip"] ||
-      req.socket?.remoteAddress ||
-      "0.0.0.0";
-
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo";
-    const language = req.headers["accept-language"]?.split(",")[0] || "pt-BR";
-    const userAgent = req.headers["user-agent"] || "";
-
     const payload = {
       ...req.body,
-      client_ip_address: ip,
-      client_user_agent: userAgent,
-      client_language: language,
-      client_timezone: timezone,
-      source: req.body?.source || "event_generic",
+      client_ip_address: req.headers["x-forwarded-for"] || undefined
     };
 
     const response = await fetch(
@@ -38,11 +24,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "X-Forwarded-For": typeof ip === "string" ? ip : "",
-          "X-Real-IP": typeof ip === "string" ? ip : "",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       }
     );
 
