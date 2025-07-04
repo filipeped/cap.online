@@ -27,11 +27,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // ✅ LOGS DE DEBUG
     console.log("🔄 Proxy CAPI: Enviando para Meta...");
-    console.log("📊 Proxy CAPI: Pixel ID:", "735685568823270");
+    console.log("📊 Proxy CAPI: Pixel ID:", "1709146913074890");
     console.log("📊 Proxy CAPI: Payload size:", JSON.stringify(payload).length, "bytes");
 
     const response = await fetch(
-      "https://graph.facebook.com/v19.0/735685568823270/events?access_token=EAAQfmxkTTZCcBOx7Rlh6wgZAQYHETf45wf5jknPwae98s3JgV6qZA4YAujlvMnFQE29MY0DWX3pJGeQx04XT0zDuuU7SegnCsCN0lK6LVil4yaelgI7CBPwVVFu4N8Gjl2vsUcvBAgtkPX3dlXtk4wlIeDm6C4XMvGeZBMjRPEZAd6Mpyiz5r2nuu8rcGHAZDZD",
+      "https://graph.facebook.com/v19.0/1709146913074890/events?access_token=EAAQfmxkTTZCcBPHcfZBYxS6Gwowpu7isZCvwr8obfgjELjnDB9G9cNxkQCivqGLE9hTY7SqyqqQ1NoAr0OcKZAQlZAr0ZAVoajZBp1ZC1KV4igNMzwsXpmWBcVpaDGKwHCpTRxDJUuEhbPf98gEfTy8ZCM0YjEsyRNDhLXIYUun7iLylO3x1du9wZCjIVBZAMmiaIoI3QZDZD",
       {
         method: "POST",
         headers: {
@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log("✅ Proxy CAPI: Resposta da Meta - Data:", data);
     
     if (response.ok) {
-      console.log("�� Proxy CAPI: Evento enviado com SUCESSO!");
+      console.log("✅ Proxy CAPI: Evento enviado com SUCESSO!");
     } else {
       console.log("❌ Proxy CAPI: Erro na resposta da Meta:", response.status, data);
     }
