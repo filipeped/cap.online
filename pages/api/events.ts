@@ -71,8 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     const controller = new AbortController();
-    const timeoutMs = 8000;
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const timeout = setTimeout(() => controller.abort(), 8000);
 
     const payload = JSON.stringify({ data, ...(test_event_code && { test_event_code }) });
     const shouldCompress = Buffer.byteLength(payload) > 2048;
@@ -85,12 +84,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     };
 
     try {
-      const response = await fetch(`https://graph.facebook.com/v18.0/${pixelId}/events?access_token=${accessToken}`, {
-        method: "POST",
-        headers,
-        body,
-        signal: controller.signal,
-      });
+      const response = await fetch(
+        `https://graph.facebook.com/v18.0/${pixelId}/events?access_token=${accessToken}`,
+        {
+          method: "POST",
+          headers,
+          body,
+          signal: controller.signal,
+        }
+      );
 
       clearTimeout(timeout);
       const json = await response.json();
