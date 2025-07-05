@@ -6,7 +6,7 @@ module.exports = {
         headers: [
           {
             key: "Access-Control-Allow-Origin",
-            value: "https://www.digitalpaisagismo.pro"
+            value: "https://www.digitalpaisagismo.com.br"
           },
           {
             key: "Access-Control-Allow-Methods",
