@@ -12,16 +12,23 @@ export default function Home() {
     setStatus("⏳ Enviando evento de teste...");
 
     const event = {
-      event_name: "TestEvent",
+      event_name: "Lead",
       event_time: Math.floor(Date.now() / 1000),
       action_source: "website",
       event_source_url: "https://www.digitalpaisagismo.pro",
       user_data: {
         external_id: "dec28dba1ef8f7a974d0daa5fb417e886d608ff870dea037176fafd3ef931045",
-        client_ip_address: "123.123.123.123",
-        client_user_agent: navigator.userAgent
+        client_ip_address: "177.155.123.123",
+        client_user_agent: navigator.userAgent,
+        fbp: "fb.1.1751360590432.213448171908285443",
+        fbc: "fb.1.1751360590432.IwAR3T_Exemplo"
       },
       custom_data: {
+        value: 900,
+        currency: "BRL",
+        content_name: "LeadFromForm",
+        content_type: "form",
+        content_category: "lead",
         diagnostic_mode: true,
         triggered_by: "manual_test"
       }
