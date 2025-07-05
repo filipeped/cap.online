@@ -8,7 +8,7 @@ function rateLimit(ip: string): boolean {
   const now = Date.now();
   const windowMs = 60 * 1000;
   if (!rateLimitMap.has(ip)) rateLimitMap.set(ip, []);
-  const timestamps = rateLimitMap.get(ip)!.filter((t: number) => now - t < windowMs);
+  const timestamps = rateLimitMap.get(ip).filter((t: number) => now - t < windowMs);
   if (timestamps.length >= RATE_LIMIT) return false;
   timestamps.push(now);
   rateLimitMap.set(ip, timestamps);
@@ -30,7 +30,7 @@ function cleanObject(obj: Record<string, any>) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader("Access-Control-Allow-Origin", "https://www.digitalpaisagismo.pro");
+  res.setHeader("Access-Control-Allow-Origin", "https://www.digitalpaisagismo.com.br");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   res.setHeader("X-Content-Type-Options", "nosniff");
@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "POST") return res.status(405).json({ error: "Método não permitido" });
 
   const ip = req.headers["x-forwarded-for"]?.toString() || req.socket.remoteAddress || "unknown";
-  if (!rateLimit(ip)) return res.status(429).json({ error: "Limite de requisições excedido" });
+  if (!rateLimit(ip)) return res.status(429).json({ error: "Limite de requisições excedido. Tente novamente em instantes." });
 
   try {
     const { data, pixel_id, test_event_code } = req.body;
@@ -49,8 +49,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Payload inválido" });
     }
 
-    const pixelId = pixel_id || "735685568823270";
-    const accessToken = process.env.META_ACCESS_TOKEN || "EAAQfmxkTTZCcBOx7Rlh6wgZAQYHETf45wf5jknPwae98s3JgV6qZA4YAujlvMnFQE29MY0DWX3pJGeQx04XT0zDuuU7SegnCsCN0lK6LVil4yaelgI7CBPwVVFu4N8Gjl2vsUcvBAgtkPX3dlXtk4wlIeDm6C4XMvGeZBMjRPEZAd6Mpyiz5r2nuu8rcGHAZDZD";
+    const pixelId = pixel_id || "2528271940857156";
+    const accessToken = "EAAQfmxkTTZCcBPNmwPw6SyHeo5Gt7YzTf5OQGgxAqiZBQRgQoIL1aWAVcynfSxaB7Pvpl7JZBH8kvqSTU2cMolfBLVP9LWbZCI7cdgwpcjSlf40lLndmyJMfiDNEFcMaRURGBXvUE5Fw0hf0j1w5kMprPz13IdRZBWBppfdWnLydkRicmm3BUejkHoUEwWAZDZD";
     const seenEventIds = new Set();
 
     data.forEach((event: any) => {
@@ -64,14 +64,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!event.user_data.fbp && req.cookies?._fbp) event.user_data.fbp = req.cookies._fbp;
       if (!event.user_data.fbc && req.cookies?._fbc) event.user_data.fbc = req.cookies._fbc;
       if (!event.event_source_url && req.headers.referer) event.event_source_url = req.headers.referer;
-
       event.action_source = "website";
+
       event.user_data = cleanObject(event.user_data);
       event.custom_data = cleanObject(event.custom_data || {});
     });
 
     const controller = new AbortController();
-    const timeoutMs = parseInt(process.env.CAPI_TIMEOUT_MS || "8000", 10);
+    const timeoutMs = 8000;
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
     const payload = JSON.stringify({ data, ...(test_event_code && { test_event_code }) });
@@ -91,6 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         body,
         signal: controller.signal,
       });
+
       clearTimeout(timeout);
       const json = await response.json();
 
