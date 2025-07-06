@@ -558,7 +558,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
         // ✅ CORREÇÃO: Garantir que sessionId seja string antes de adicionar
         if (sessionId && typeof sessionId === 'string') externalIds.push(sessionId);
-        const uniqueIds = [...new Set(externalIds.filter(id => id && id.length > 0))];
+        const uniqueIds = Array.from(new Set(externalIds.filter(id => id && id.length > 0)));
         if (uniqueIds.length > 0) {
           event.user_data.external_id = uniqueIds.length === 1 ? uniqueIds[0] : uniqueIds;
         }
