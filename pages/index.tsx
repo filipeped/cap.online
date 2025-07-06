@@ -33,11 +33,17 @@ export default function Home() {
       }
     };
 
+    const payload = {
+      data: [event],
+      pixel_id: "1142320931265624",
+      access_token: "EAAQfmxkTTZCcBPO6rRZC3CCdEXUAvAEfteO3nZCP6AZCiIPv0Pmz8KGLXXdwVitIZBmzEo2MabsscCZAgjtcUcDbtyAcOAANOqZCSwabcgYevluCcQnKkFjOchJjwOwEZClZBt7Oi4kQhPPQZB75kLvZCScyNjkhibY1aYWQ7Linj0W8ERDtYPSsXXG7UGcmjhslOTsQwZDZD"
+    };
+
     try {
       const res = await fetch("/api/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: [event] })
+        body: JSON.stringify(payload)
       });
 
       const json = await res.json();
