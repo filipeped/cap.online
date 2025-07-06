@@ -513,7 +513,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const pixelId = pixel_id || "1142320931265624";
     const accessToken = process.env.META_ACCESS_TOKEN || "EAAQfmxkTTZCcBPO6rRZC3CCdEXUAvAEfteO3nZCP6AZCiIPv0Pmz8KGLXXdwVitIZBmzEo2MabsscCZAgjtcUcDbtyAcOAANOqZCSwabcgYevluCcQnKkFjOchJjwOwEZClZBt7Oi4kQhPPQZB75kLvZCScyNjkhibY1aYWQ7Linj0W8ERDtYPSsXXG7UGcmjhslOTsQwZDZD";
 
-    const seenEventIds = new Set();
+    const seenEventIds = new Map();
     const validatedEvents: any[] = [];
     const fbpHeader = getCookie(req.headers.cookie, "_fbp");
     const fbcHeader = getCookie(req.headers.cookie, "_fbc");
@@ -528,7 +528,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         log("warn", "Evento duplicado ignorado", { event_id: event.event_id });
         continue;
       }
-      seenEventIds.add(event.event_id);
+      seenEventIds.set(event.event_id, true);
 
       const validation = validateEvent(event);
       if (!validation.isValid) {
@@ -558,7 +558,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
         // ✅ CORREÇÃO: Garantir que sessionId seja string antes de adicionar
         if (sessionId && typeof sessionId === 'string') externalIds.push(sessionId);
-        const uniqueIds = Array.from(new Set(externalIds.filter(id => id && id.length > 0)));
+        
+        // ✅ CORREÇÃO: Deduplicação simples sem Set
+        const filteredIds = externalIds.filter(id => id && id.length > 0);
+        const uniqueIds: string[] = [];
+        for (const id of filteredIds) {
+          if (!uniqueIds.includes(id)) {
+            uniqueIds.push(id);
+          }
+        }
+        
         if (uniqueIds.length > 0) {
           event.user_data.external_id = uniqueIds.length === 1 ? uniqueIds[0] : uniqueIds;
         }
