@@ -37,6 +37,16 @@ function rateLimit(ip: string): boolean {
   return true;
 }
 
+// Função utilitária para checar se uma string não está vazia
+function isNonEmptyString(val: any) {
+  return typeof val === "string" && val.trim().length > 0;
+}
+
+// Função utilitária para validar hash SHA256 (64 caracteres hexadecimais)
+function isSha256(str: string) {
+  return /^[a-f0-9]{64}$/i.test(str);
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const startTime = Date.now();
   const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
@@ -103,8 +113,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const enrichedData = req.body.data.map((event: any) => {
       const sessionId = event.session_id || "";
-      // CORREÇÃO: só gera se não vier do frontend
-      const externalId = event.user_data?.external_id || (sessionId ? crypto.createHash("sha256").update(sessionId).digest("hex") : "");
+
+      // Validação e fallback para external_id
+      const externalId = isNonEmptyString(event.user_data?.external_id)
+        ? event.user_data.external_id
+        : (sessionId ? crypto.createHash("sha256").update(sessionId).digest("hex") : "");
+
+      // Validação para fbp e fbc
+      const fbp = isNonEmptyString(event.user_data?.fbp) ? event.user_data.fbp : "";
+      const fbc = isNonEmptyString(event.user_data?.fbc) ? event.user_data.fbc : "";
+
+      // Logs de alerta para campos importantes ausentes ou vazios
+      if (!isNonEmptyString(externalId)) {
+        console.warn("⚠️ external_id ausente ou vazio no evento:", event.event_name);
+      }
+      if (!isNonEmptyString(fbp)) {
+        console.warn("⚠️ fbp ausente ou vazio no evento:", event.event_name);
+      }
+      if (!isNonEmptyString(fbc)) {
+        console.warn("⚠️ fbc ausente ou vazio no evento:", event.event_name);
+      }
+
+      // Validação de hash para e-mail, telefone, etc. (se existirem)
+      if (event.user_data?.em && !isSha256(event.user_data.em)) {
+        console.warn("⚠️ Email não está em hash SHA256:", event.user_data.em);
+      }
+      if (event.user_data?.ph && !isSha256(event.user_data.ph)) {
+        console.warn("⚠️ Telefone não está em hash SHA256:", event.user_data.ph);
+      }
+
       const eventId = event.event_id || `evt_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
       const eventSourceUrl = event.event_source_url || "https://www.digitalpaisagismo.com.br";
       const eventTime = event.event_time || Math.floor(Date.now() / 1000);
@@ -127,8 +164,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           external_id: externalId,
           client_ip_address: ip,
           client_user_agent: userAgent,
-          fbp: event.user_data?.fbp || "",
-          fbc: event.user_data?.fbc || ""
+          fbp,
+          fbc
         }
       };
     });
