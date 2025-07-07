@@ -103,7 +103,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const enrichedData = req.body.data.map((event: any) => {
       const sessionId = event.session_id || "";
-      const externalId = sessionId ? crypto.createHash("sha256").update(sessionId).digest("hex") : "";
+      // CORREÇÃO: só gera se não vier do frontend
+      const externalId = event.user_data?.external_id || (sessionId ? crypto.createHash("sha256").update(sessionId).digest("hex") : "");
       const eventId = event.event_id || `evt_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
       const eventSourceUrl = event.event_source_url || "https://www.digitalpaisagismo.com.br";
       const eventTime = event.event_time || Math.floor(Date.now() / 1000);
