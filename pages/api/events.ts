@@ -1,5 +1,6 @@
 // ✅ digitalpaisagismo-capi-v6-final
 // Proxy Meta CAPI com todas as boas práticas aplicadas
+
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 
