@@ -1,42 +1,72 @@
+// ✅ digitalpaisagismo-capi-v6-final
+// Proxy Meta CAPI com todas as boas práticas aplicadas
+
 import type { NextApiRequest, NextApiResponse } from "next";
+import crypto from "crypto";
+
+const PIXEL_ID = "703302575818162";
+const ACCESS_TOKEN = "EAAQfmxkTTZCcBPMtbiRdOTtGC1LycYJsKXnFZCs3N04MsoBjbx5WdvaPhObbtmKg3iDZBJZAjAlpzqWAr80uEUsUSm95bVCODpzJSsC3X6gA9u6yPC3oDko8gUIMW2SA5C7MOsZBvmyVN72N38UcMKp8uGbQaPxe9r5r66H6PAXuZCieIl6gPIFU5c2ympRwZDZD";
+const META_URL = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "*");
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
   try {
-    if (!req.body || !req.body.data) {
+    if (!req.body?.data || !Array.isArray(req.body.data)) {
       console.log("❌ Payload inválido:", req.body);
       return res.status(400).json({ error: "Payload inválido - campo 'data' obrigatório" });
     }
 
-    const payload = {
-      ...req.body,
-      client_ip_address: req.headers["x-forwarded-for"] || undefined
-    };
+    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
+    const userAgent = req.headers["user-agent"] || "";
 
-    console.log("📤 Enviando evento para Meta...");
-    console.log("📦 Payload:", JSON.stringify(payload, null, 2));
+    const enrichedData = req.body.data.map((event: any) => {
+      const sessionId = event.session_id || "";
+      const externalId = sessionId ? crypto.createHash("sha256").update(sessionId).digest("hex") : "";
+      const eventId = event.event_id || `evt_${Date.now()}`;
+      const eventSourceUrl = event.event_source_url || "https://www.digitalpaisagismo.com.br";
+      const eventTime = event.event_time || Math.floor(Date.now() / 1000);
+      const actionSource = event.action_source || "website";
 
-    const response = await fetch(
-      "https://graph.facebook.com/v19.0/1142320931265624/events?access_token=EAAQfmxkTTZCcBPE6z5Mgf1ZCfkKUhNFD5LU2AuEmyLtuV1UVSwjANzv83DstSvctfcO3iZCHW1xwWky9a4qYg8RCy2N4SKZAZCTvwWjRbks1ZAjqKjlDjsxreDH65yvvb7ZAr51xrm5N83PwwzKuTxr1fFvaMsqEmkfp5Y6wVmOMijWjRdKv0dUfnNZBb1ZBKFAZDZD",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      }
-    );
+      const customData = {
+        value: event.custom_data?.value ?? 0,
+        currency: event.custom_data?.currency ?? "BRL",
+        ...event.custom_data
+      };
+
+      return {
+        ...event,
+        event_id: eventId,
+        event_time: eventTime,
+        event_source_url: eventSourceUrl,
+        action_source: actionSource,
+        custom_data: customData,
+        user_data: {
+          external_id: externalId,
+          client_ip_address: ip,
+          client_user_agent: userAgent,
+          fbp: event.user_data?.fbp || "",
+          fbc: event.user_data?.fbc || ""
+        }
+      };
+    });
+
+    const payload = { data: enrichedData };
+
+    console.log("🔄 Enviando evento para Meta CAPI...");
+    console.log("📦 Payload:", JSON.stringify(payload));
+    console.log("📊 Pixel ID:", PIXEL_ID);
+
+    const response = await fetch(`${META_URL}?access_token=${ACCESS_TOKEN}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
     const data = await response.json();
     console.log("✅ Resposta da Meta:", data);
