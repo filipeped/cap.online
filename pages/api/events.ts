@@ -1,140 +1,93 @@
+// ✅ Proxy Meta CAPI com deduplicação real e user_data enriquecido
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 
-// Idealmente obter Pixel ID e Token de ambiente:
-const PIXEL_ID = process.env.META_PIXEL_ID || "1142320931265624";
-const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN;
+const PIXEL_ID = "1142320931265624";
+const ACCESS_TOKEN = "EAAQfmxkTTZCcBPIMWwATuCACQWiLQ7u1qwP1ZBA46VbAu0BoBLmmSwWjEw5oRSyJRaGNQnLK7b6ttEF3OCNq2u3eZBCZBZBfPUJj2pdBz4bSxyx4ENCuxIA4yVnkNGF8mB2O5A0uVMg1940Geu6kGR6mu6swQGxx2tWaa3RouTuCXBngVwpQeH18kuq3EZBAZDZD";
 const META_URL = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;
 
-// Checagem imediata de configuração essencial
-if (!ACCESS_TOKEN) {
-  throw new Error("Meta CAPI Access Token não configurado. Defina META_ACCESS_TOKEN nas variáveis de ambiente.");
-}
-
-interface MetaEvent {
-  event_name: string;
-  event_id?: string;
-  event_time?: number;
-  event_source_url?: string;
-  action_source?: string;
-  session_id?: string;
-  custom_data?: {
-    value?: number;
-    currency?: string;
-    [key: string]: any;
-  };
-  user_data?: {
-    fbp?: string;
-    fbc?: string;
-    // Outros campos de user_data (emails hasheados, etc.) poderiam ser listados aqui
-  };
-}
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Configuração de CORS (ajuste conforme necessidade de segurança)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "*");
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
-  }
+
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
   try {
-    // Validação básica do corpo
-    const events: MetaEvent[] = req.body?.data;
-    if (!events || !Array.isArray(events)) {
-      console.error("❌ Payload inválido: 'data' ausente ou formato incorreto.", req.body);
-      return res.status(400).json({ error: "Payload inválido - campo 'data' (array) obrigatório" });
+    if (!req.body?.data || !Array.isArray(req.body.data)) {
+      console.log("❌ Payload inválido:", req.body);
+      return res.status(400).json({ error: "Payload inválido - campo 'data' obrigatório" });
     }
 
-    // Captura IP e User Agent do cliente
     const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
     const userAgent = req.headers["user-agent"] || "";
 
-    // Processa e enriquece cada evento
-    const enrichedData = events
-      .filter(event => {
-        if (!event || !event.event_name) {
-          console.warn("⚠️ Evento descartado por falta de 'event_name'.", event);
-          return false;
-        }
-        return true;
-      })
-      .map(event => {
-        // Garantir session_id e derivar external_id
-        let sessionId = event.session_id;
-        if (!sessionId) {
-          sessionId = `${ip}_${userAgent}_${Date.now()}`;
-          console.warn("⚠️ session_id não fornecido. Usando fallback para external_id.");
-        }
-        const externalIdHash = crypto.createHash("sha256").update(sessionId).digest("hex");
+    const enrichedData = req.body.data.map((event: any) => {
+      // Garantir session_id para external_id
+      let sessionId = event.session_id;
+      if (!sessionId) {
+        sessionId = `${ip}_${userAgent}_${Date.now()}`;
+        console.warn("⚠️ session_id não enviado! Gerando fallback para external_id.");
+      }
+      const externalId = crypto.createHash("sha256").update(sessionId).digest("hex");
 
-        // Garantir event_id único para deduplicação
-        let eventId = event.event_id;
-        if (!eventId) {
-          eventId = `evt_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
-          console.warn("⚠️ event_id ausente. Gerado no backend:", eventId);
-        }
+      // Garantir event_id único e logar se não vier do frontend
+      const eventId = event.event_id || `evt_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+      if (!event.event_id) {
+        console.warn("⚠️ event_id não enviado pelo frontend! Gerando novo no backend:", eventId);
+      }
 
-        // Definir campos com defaults se necessário
-        const eventTime = event.event_time || Math.floor(Date.now() / 1000);
-        const actionSource = event.action_source || "website";
-        const eventSourceUrl = event.event_source_url || "https://www.digitalpaisagismo.pro";
+      const eventTime = event.event_time || Math.floor(Date.now() / 1000);
+      const actionSource = event.action_source || "website";
+      const eventSourceUrl = event.event_source_url || "https://www.digitalpaisagismo.pro";
 
-        // Preparar custom_data filtrando value inválido e definindo currency padrão
-        const customData = { ...event.custom_data } || {};
-        if (typeof customData.value !== "number" || customData.value <= 0) {
-          delete customData.value;
-        }
-        customData.currency = customData.currency ?? "BRL";
+      // Ajuste: só envia value se for número > 0
+      const customData = {
+        ...event.custom_data,
+        value: typeof event.custom_data?.value === "number" && event.custom_data.value > 0
+          ? event.custom_data.value
+          : undefined,
+        currency: event.custom_data?.currency ?? "BRL"
+      };
 
-        // Preparar user_data incluindo apenas campos presentes
-        const userData: Record<string, any> = {
-          external_id: externalIdHash,
+      // Logs de auditoria para campos críticos
+      if (!event.user_data?.fbp) console.warn("⚠️ fbp ausente no evento!");
+      if (!event.user_data?.fbc) console.warn("⚠️ fbc ausente no evento!");
+
+      return {
+        event_name: event.event_name,
+        event_id: eventId,
+        event_time: eventTime,
+        event_source_url: eventSourceUrl,
+        action_source: actionSource,
+        custom_data: customData,
+        user_data: {
+          external_id: externalId,
           client_ip_address: ip,
-          client_user_agent: userAgent
-        };
-        if (event.user_data?.fbp) {
-          userData.fbp = event.user_data.fbp;
-        } else {
-          console.warn("⚠️ fbp ausente no evento!");
+          client_user_agent: userAgent,
+          fbp: event.user_data?.fbp || "",
+          fbc: event.user_data?.fbc || ""
         }
-        if (event.user_data?.fbc) {
-          userData.fbc = event.user_data.fbc;
-        } else {
-          console.warn("⚠️ fbc ausente no evento!");
-        }
-
-        return {
-          event_name: event.event_name,
-          event_id: eventId,
-          event_time: eventTime,
-          event_source_url: eventSourceUrl,
-          action_source: actionSource,
-          custom_data: customData,
-          user_data: userData
-        };
-      });
+      };
+    });
 
     const payload = { data: enrichedData };
-    console.log("📤 Enviando eventos para Meta CAPI...");
-    console.debug("📦 Payload:", JSON.stringify(payload));
 
-    // Chamada à API do Facebook
+    console.log("📤 Enviando evento para Meta...");
+    console.log("📦 Payload:", JSON.stringify(payload, null, 2));
+
     const response = await fetch(`${META_URL}?access_token=${ACCESS_TOKEN}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
 
-    const responseData = await response.json();
-    console.log(`✅ Resposta da Meta [Status: ${response.status}]:`, responseData);
-    return res.status(response.status).json(responseData);
-  } catch (error) {
-    console.error("❌ Erro no Proxy CAPI:", error);
-    return res.status(500).json({ error: "Erro interno no servidor CAPI." });
+    const data = await response.json();
+    console.log("✅ Resposta da Meta:", data);
+    res.status(response.status).json(data);
+  } catch (err) {
+    console.error("❌ Erro no Proxy CAPI:", err);
+    res.status(500).json({ error: "Erro interno no servidor CAPI." });
   }
 }
