@@ -3,7 +3,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 
 const PIXEL_ID = "1142320931265624";
-const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || "SUA_TOKEN_AQUI";
+const ACCESS_TOKEN = "EAAQfmxkTTZCcBPIMWwATuCACQWiLQ7u1qwP1ZBA46VbAu0BoBLmmSwWjEw5oRSyJRaGNQnLK7b6ttEF3OCNq2u3eZBCZBZBfPUJj2pdBz4bSxyx4ENCuxIA4yVnkNGF8mB2O5A0uVMg1940Geu6kGR6mu6swQGxx2tWaa3RouTuCXBngVwpQeH18kuq3EZBAZDZD";
 const META_URL = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
