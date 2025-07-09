@@ -33,11 +33,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const eventTime = event.event_time || Math.floor(Date.now() / 1000);
       const actionSource = event.action_source || "website";
 
+      const rawValue = event.custom_data?.value;
+      const parsedValue = typeof rawValue === "string" ? Number(rawValue) : rawValue;
+
       const customData = {
-        value: event.custom_data?.value ?? 0,
+        ...event.custom_data,
         currency: event.custom_data?.currency ?? "BRL",
-        ...event.custom_data
       };
+
+      if (!isNaN(parsedValue) && parsedValue > 0) {
+        customData.value = parsedValue;
+      } else {
+        delete customData.value;
+      }
 
       return {
         ...event,
