@@ -1,11 +1,9 @@
-// ✅ digitalpaisagismo-capi-v6-final
-// Proxy Meta CAPI com todas as boas práticas aplicadas
-
+// ✅ Proxy Meta CAPI com deduplicação real e user_data enriquecido
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 
-const PIXEL_ID = "703302575818162";
-const ACCESS_TOKEN = "EAAQfmxkTTZCcBPMtbiRdOTtGC1LycYJsKXnFZCs3N04MsoBjbx5WdvaPhObbtmKg3iDZBJZAjAlpzqWAr80uEUsUSm95bVCODpzJSsC3X6gA9u6yPC3oDko8gUIMW2SA5C7MOsZBvmyVN72N38UcMKp8uGbQaPxe9r5r66H6PAXuZCieIl6gPIFU5c2ympRwZDZD";
+const PIXEL_ID = "1142320931265624";
+const ACCESS_TOKEN = process.env.META_ACCESS_TOKEN || "SUA_TOKEN_AQUI";
 const META_URL = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -26,21 +24,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const userAgent = req.headers["user-agent"] || "";
 
     const enrichedData = req.body.data.map((event: any) => {
-      const sessionId = event.session_id || "";
-      const externalId = sessionId ? crypto.createHash("sha256").update(sessionId).digest("hex") : "";
-      const eventId = event.event_id || `evt_${Date.now()}`;
-      const eventSourceUrl = event.event_source_url || "https://www.digitalpaisagismo.com.br";
+      // Garantir session_id para external_id
+      let sessionId = event.session_id;
+      if (!sessionId) {
+        sessionId = `${ip}_${userAgent}_${Date.now()}`;
+        console.warn("⚠️ session_id não enviado! Gerando fallback para external_id.");
+      }
+      const externalId = crypto.createHash("sha256").update(sessionId).digest("hex");
+
+      // Garantir event_id único e logar se não vier do frontend
+      const eventId = event.event_id || `evt_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+      if (!event.event_id) {
+        console.warn("⚠️ event_id não enviado pelo frontend! Gerando novo no backend:", eventId);
+      }
+
       const eventTime = event.event_time || Math.floor(Date.now() / 1000);
       const actionSource = event.action_source || "website";
+      const eventSourceUrl = event.event_source_url || "https://www.digitalpaisagismo.pro";
 
+      // Ajuste: só envia value se for número > 0
       const customData = {
-        value: event.custom_data?.value ?? 0,
-        currency: event.custom_data?.currency ?? "BRL",
-        ...event.custom_data
+        ...event.custom_data,
+        value: typeof event.custom_data?.value === "number" && event.custom_data.value > 0
+          ? event.custom_data.value
+          : undefined,
+        currency: event.custom_data?.currency ?? "BRL"
       };
 
+      // Logs de auditoria para campos críticos
+      if (!event.user_data?.fbp) console.warn("⚠️ fbp ausente no evento!");
+      if (!event.user_data?.fbc) console.warn("⚠️ fbc ausente no evento!");
+
       return {
-        ...event,
+        event_name: event.event_name,
         event_id: eventId,
         event_time: eventTime,
         event_source_url: eventSourceUrl,
@@ -58,9 +74,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const payload = { data: enrichedData };
 
-    console.log("🔄 Enviando evento para Meta CAPI...");
-    console.log("📦 Payload:", JSON.stringify(payload));
-    console.log("📊 Pixel ID:", PIXEL_ID);
+    console.log("📤 Enviando evento para Meta...");
+    console.log("📦 Payload:", JSON.stringify(payload, null, 2));
 
     const response = await fetch(`${META_URL}?access_token=${ACCESS_TOKEN}`, {
       method: "POST",
