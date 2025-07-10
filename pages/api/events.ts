@@ -1,5 +1,5 @@
-// ✅ digitalpaisagismo.com.br-capi-v6-otimizado
-// Proxy Meta CAPI com IPv6, deduplicação forte, user_data validado e event_name garantido
+// ✅ digitalpaisagismo.com.br-capi-v6-final
+// Proxy Meta CAPI com todas as boas práticas aplicadas + user_data completo
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
@@ -22,17 +22,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Payload inválido - campo 'data' obrigatório" });
     }
 
-    const ipHeader = req.headers["x-forwarded-for"] as string;
-    const rawIp = ipHeader?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
-    const clientIp = rawIp.includes(":") ? rawIp : `::ffff:${rawIp}`;
+    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
     const userAgent = req.headers["user-agent"] || "";
 
     const enrichedData = req.body.data.map((event: any) => {
-      const rawSessionId = event.session_id || "";
-      const namespacedId = `com.br::${rawSessionId}`;
-      const externalId = namespacedId ? crypto.createHash("sha256").update(namespacedId).digest("hex") : "";
-      const eventId = event.event_id || `evt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-      const eventName = event.event_name || "PageView";
+      const sessionId = event.session_id || "";
+      const externalId = sessionId ? crypto.createHash("sha256").update(sessionId).digest("hex") : "";
+      const eventId = event.event_id || `evt_${Date.now()}`;
       const eventSourceUrl = event.event_source_url || "https://www.digitalpaisagismo.com.br";
       const eventTime = event.event_time || Math.floor(Date.now() / 1000);
       const actionSource = event.action_source || "website";
@@ -44,38 +40,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ...event.custom_data,
         currency: event.custom_data?.currency ?? "BRL",
       };
+
       if (!isNaN(parsedValue) && parsedValue > 0) {
         customData.value = parsedValue;
       } else {
         delete customData.value;
       }
 
-      const fbcValue = event.user_data?.fbc;
-      const isFbcValid = typeof fbcValue === "string" && fbcValue.includes("fb.");
-
-      const userData: Record<string, string> = {
-        external_id: externalId,
-        client_ip_address: clientIp,
-        client_user_agent: userAgent,
-      };
-
-      ["fbp", "fbc", "em", "ph", "fn", "ln"].forEach((key) => {
-        const value = event.user_data?.[key];
-        if (typeof value === "string" && value.trim() !== "") {
-          if (key === "fbc" && !isFbcValid) return;
-          userData[key] = value;
-        }
-      });
-
       return {
         ...event,
-        event_name: eventName,
         event_id: eventId,
         event_time: eventTime,
         event_source_url: eventSourceUrl,
         action_source: actionSource,
         custom_data: customData,
-        user_data: userData
+        user_data: {
+          external_id: externalId,
+          client_ip_address: ip,
+          client_user_agent: userAgent,
+          fbp: event.user_data?.fbp || "",
+          fbc: event.user_data?.fbc || "",
+          em: event.user_data?.em || "",
+          ph: event.user_data?.ph || "",
+          fn: event.user_data?.fn || "",
+          ln: event.user_data?.ln || ""
+        }
       };
     });
 
