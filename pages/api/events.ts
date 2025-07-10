@@ -1,5 +1,5 @@
 // ✅ digitalpaisagismo.com.br-capi-v6-final
-// Proxy Meta CAPI com IPv6, deduplicação segura e user_data completo
+// Proxy Meta CAPI com IPv6, deduplicação segura, user_data completo e event_name garantido
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
@@ -35,6 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const eventSourceUrl = event.event_source_url || "https://www.digitalpaisagismo.com.br";
       const eventTime = event.event_time || Math.floor(Date.now() / 1000);
       const actionSource = event.action_source || "website";
+      const eventName = event.event_name || "PageView";
 
       const rawValue = event.custom_data?.value;
       const parsedValue = typeof rawValue === "string" ? Number(rawValue) : rawValue;
@@ -55,6 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       return {
         ...event,
+        event_name: eventName,
         event_id: eventId,
         event_time: eventTime,
         event_source_url: eventSourceUrl,
