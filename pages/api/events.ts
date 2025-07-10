@@ -1,5 +1,5 @@
 // ✅ digitalpaisagismo.com.br-capi-v6-final
-// Proxy Meta CAPI com todas as boas práticas aplicadas + user_data completo
+// Proxy Meta CAPI com IPv6, deduplicação segura e user_data completo
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
@@ -22,12 +22,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "Payload inválido - campo 'data' obrigatório" });
     }
 
-    const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
+    const ipHeader = req.headers["x-forwarded-for"] as string;
+    const rawIp = ipHeader?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
+    const clientIp = rawIp.includes(":") ? rawIp : `::ffff:${rawIp}`;
     const userAgent = req.headers["user-agent"] || "";
 
     const enrichedData = req.body.data.map((event: any) => {
       const sessionId = event.session_id || "";
-      const externalId = sessionId ? crypto.createHash("sha256").update(sessionId).digest("hex") : "";
+      const namespacedId = `com.br::${sessionId}`;
+      const externalId = namespacedId ? crypto.createHash("sha256").update(namespacedId).digest("hex") : "";
       const eventId = event.event_id || `evt_${Date.now()}`;
       const eventSourceUrl = event.event_source_url || "https://www.digitalpaisagismo.com.br";
       const eventTime = event.event_time || Math.floor(Date.now() / 1000);
@@ -47,6 +50,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         delete customData.value;
       }
 
+      const fbcValue = event.user_data?.fbc;
+      const isFbcValid = typeof fbcValue === "string" && fbcValue.includes("fb.");
+
       return {
         ...event,
         event_id: eventId,
@@ -56,10 +62,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         custom_data: customData,
         user_data: {
           external_id: externalId,
-          client_ip_address: ip,
+          client_ip_address: clientIp,
           client_user_agent: userAgent,
           fbp: event.user_data?.fbp || undefined,
-          fbc: event.user_data?.fbc || undefined,
+          fbc: isFbcValid ? fbcValue : undefined,
           em: event.user_data?.em || "",
           ph: event.user_data?.ph || "",
           fn: event.user_data?.fn || "",
