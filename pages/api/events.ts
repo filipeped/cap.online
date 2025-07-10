@@ -1,5 +1,5 @@
 // ✅ digitalpaisagismo-capi-v6-final
-// Proxy Meta CAPI com todas as boas práticas aplicadas
+// Proxy Meta CAPI com todas as boas práticas aplicadas + user_data completo
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
@@ -59,7 +59,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           client_ip_address: ip,
           client_user_agent: userAgent,
           fbp: event.user_data?.fbp || "",
-          fbc: event.user_data?.fbc || ""
+          fbc: event.user_data?.fbc || "",
+          em: event.user_data?.em || "",
+          ph: event.user_data?.ph || "",
+          fn: event.user_data?.fn || "",
+          ln: event.user_data?.ln || ""
         }
       };
     });
