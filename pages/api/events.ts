@@ -41,7 +41,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const enrichedData = req.body.data.map((event: any) => {
       const sessionId = event.session_id || "";
-      const externalId = sessionId ? hashPII(sessionId) : "";
+      // external_id em texto puro, sem hash!
+      const externalId = sessionId || "";
 
       const eventId = event.event_id || `evt_combr_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       const eventTime = event.event_time || Math.floor(Date.now() / 1000);
