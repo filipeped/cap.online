@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const enrichedData = req.body.data.map((event: any) => {
       const sessionId = event.session_id || "";
-      // external_id em texto puro, sem hash!
+      // external_id em texto puro, sem hash! (conforme recomendação oficial da Meta)
       const externalId = sessionId || "";
 
       const eventId = event.event_id || `evt_combr_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -64,6 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         client_user_agent: userAgent,
       };
 
+      // Envia external_id SEM hash (session_id puro)
       if (externalId) {
         userData.external_id = externalId;
       }
@@ -73,6 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (u.fbp && typeof u.fbp === "string") userData.fbp = u.fbp;
       if (u.fbc && typeof u.fbc === "string" && u.fbc.length >= 10) userData.fbc = u.fbc;
 
+      // PII sempre hasheado
       if (u.em && isValidEmail(cleanPII(u.em))) userData.em = hashPII(cleanPII(u.em));
       if (u.ph && isValidPhone(cleanPII(u.ph))) userData.ph = hashPII(cleanPII(u.ph));
       if (u.fn && cleanPII(u.fn).length >= 2) userData.fn = hashPII(cleanPII(u.fn));
