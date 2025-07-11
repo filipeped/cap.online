@@ -99,4 +99,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error("Erro interno no servidor CAPI (.com.br):", err);
     res.status(500).json({ error: "Erro interno no servidor CAPI.", details: err.message });
   }
-} 
+}
