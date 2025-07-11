@@ -70,8 +70,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const u = event.user_data || {};
 
-      if (u.fbp && typeof u.fbp === "string") userData.fbp = u.fbp.trim();
-      if (u.fbc && typeof u.fbc === "string" && u.fbc.trim().length >= 10) userData.fbc = u.fbc.trim();
+      if (u.fbp && typeof u.fbp === "string") userData.fbp = u.fbp;
+      if (u.fbc && typeof u.fbc === "string" && u.fbc.length >= 10) userData.fbc = u.fbc;
 
       if (u.em && isValidEmail(cleanPII(u.em))) userData.em = hashPII(cleanPII(u.em));
       if (u.ph && isValidPhone(cleanPII(u.ph))) userData.ph = hashPII(cleanPII(u.ph));
