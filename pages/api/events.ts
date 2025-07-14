@@ -2,8 +2,8 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 
 // --- CONSTANTES ---
-const PIXEL_ID = "1142320931265624";
-const ACCESS_TOKEN = "EAAQfmxkTTZCcBPBMalO1DjNXbRM2y8bmjoHpuzwdPIFEai0kS3ow7PTw0yqZA8EsflcHHIZAZBHJXcpaMfrDosBVMZBMPMD9yZBxtw5sohznmLHZA7lBhOR7OGzGaByy8OL3ZCYoAQ6ztJAZBck3DJBZCa3tod6lWaNgTjFgGKBUbSXPaZAgja3XBmHZADfPLt8p7gZDZD";
+const PIXEL_ID = "808390242076937";
+const ACCESS_TOKEN = "EAAIlJ9ipukoBPBaTZBxbSgwW81JPCM7KqXoMZAcbY3GbYeavIBWeyQQu5mYQJZBq2eHbAI8bqSqnTSzgyE4wr5IP4tzqSm6TQf0QIoEXGGgXRy85a3eoqzVRIBOhrvrHwbMgHqs3sQQm5FKvWoj1IYFhiJTKVmNriL2DSJL7UlHHDZASssNVOLBWVyZC6QAZDZD";
 const META_URL = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;
 
 // --- FUNÇÕES AUXILIARES OTIMIZADAS ---
