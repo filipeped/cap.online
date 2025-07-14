@@ -3,11 +3,12 @@ import crypto from "crypto";
 
 // --- CONSTANTES ---
 const PIXEL_ID = "1142320931265624";
+// ATENÇÃO: O ACCESS_TOKEN que você colou é diferente do anterior. Estou usando este mais recente.
 const ACCESS_TOKEN = "EAAQfmxkTTZCcBPOCpW8S1JD2a5QcRTUO4ZCeUzf8q6g45wUgZA4oTZArNMZBDuaEDFU9pjTmntnZC7jy3iH9i1bXgOyqPra8anW8nFAx1aqHE8wo1ohbam3L8ur2l3iPDxEFANz4GCAhDZCe7Iq7XYX5SyBNU2ZCjji9gV9lCLJq3YIgZCJmp0Dc02sBn7DT6TAZDZD";
 const META_URL = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;
 
 // --- FUNÇÕES AUXILIARES OTIMIZADAS ---
-function hashPII(value: string ): string {
+function hashPII(value: string  ): string {
   if (!value || typeof value !== 'string') return '';
   return crypto.createHash('sha256').update(value.trim().toLowerCase()).digest('hex');
 }
@@ -23,7 +24,7 @@ function isValidPhone(phone: string): boolean {
   return clean.length >= 10 && clean.length <= 15;
 }
 
-// --- HANDLER DA API FINAL E REFINADO ---
+// --- HANDLER DA API COM A LÓGICA DE DETECÇÃO DE TRÁFEGO ---
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -69,6 +70,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const actionSource = event.action_source || "website";
 
       const customData = { ...event.custom_data };
+
+      // ==================================================================
+      // ✅ SUA LÓGICA INTELIGENTE IMPLEMENTADA AQUI
+      const isAdTraffic = eventSourceUrl.includes("atendimento." );
+      customData.source_type = isAdTraffic ? "paid_traffic" : "organic_traffic";
+      // ==================================================================
+
       if (!customData.currency ) customData.currency = "BRL";
       if (customData.value) {
         const parsedValue = Number(customData.value);
