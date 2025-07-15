@@ -18,9 +18,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== "POST") return res.status(405).json({ error: "Method Not Allowed" });
 
   try {
-    if (!req.body || !req.body.data) {
+    if (!req.body || !req.body.data || !Array.isArray(req.body.data)) {
       console.log("❌ Payload inválido:", req.body);
-      return res.status(400).json({ error: "Payload inválido - campo 'data' obrigatório" });
+      return res.status(400).json({ error: "Payload inválido - campo 'data' deve ser um array" });
     }
 
     const { session_id, email, phone, first_name, last_name, fbp, fbc } = req.body;
@@ -44,9 +44,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const enhancedPayload = {
       data: req.body.data.map((event: any) => ({
         ...event,
-        event_source_url: event.event_source_url || req.headers.referer || "https://www.digitalpaisagismo.com.br",
+        event_source_url: event.event_source_url || req.headers.referer || "https://www.digitalpaisagismo.online",
         action_source: "website",
         event_id: event.event_id || `${Date.now()}-${Math.random()}`,
+        event_time: event.event_time || Math.floor(Date.now() / 1000),
         user_data: userData
       }))
     };
