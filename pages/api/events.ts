@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 
-const PIXEL_ID = "747466124434832";
-const ACCESS_TOKEN = "EAAQfmxkTTZCcBPLC1jmMBZAXQPNMTb8Fo3L8di6YChNFI4Mpz2sZAC0deqVVQJpiZAnQJCUI2JpTuZBoThOcJ96yKTywZBJpc8IASSRJfJpjZB7nWfvO4fyOHTF6MjLWoZB10dTeYLhPBbzAZBJABdYrmvmSjTZBsbviE8CFx0xVdrnfZAJIBbbZB09VtC6KsjPHBQZDZD";
+const PIXEL_ID = "1142320931265624";
+const ACCESS_TOKEN = "EAAQfmxkTTZCcBPL7x4Ap1LdXyFRQoWk5bMaBRhi3urT1PebSdYmiM3D2ZB4kG7zF9YMO3gtU5I4WnVeN9ZCFMf7QUkGudvuAwVBOSDCveNXJazZCWOJlzAP8nSZCzPKasx4Pe60o5kvsZBvIyrFibFYYkX46Njsau9wdhcIt8qfycQTs1OW2RGhBUBLGbwHAZDZD";
 const META_URL = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;
 
 function hashSHA256(value: string): string {
@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const enhancedPayload = {
       data: req.body.data.map((event: any) => ({
         ...event,
-        event_source_url: event.event_source_url || req.headers.referer || "https://www.digitalpaisagismo.online",
+        event_source_url: event.event_source_url || req.headers.referer || "https://www.digitalpaisagismo.com.br",
         action_source: "website",
         event_id: event.event_id || `${Date.now()}-${Math.random()}`,
         user_data: userData
