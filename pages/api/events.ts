@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const enhancedPayload = {
       data: req.body.data.map((event: any) => ({
         ...event,
-        event_source_url: event.event_source_url || req.headers.referer || "https://www.digitalpaisagismo.online",
+        event_source_url: event.event_source_url || req.headers.referer || "https://www.digitalpaisagismo.com.br",
         action_source: "website",
         event_id: event.event_id || `${Date.now()}-${Math.random()}`,
         event_time: event.event_time || Math.floor(Date.now() / 1000),
