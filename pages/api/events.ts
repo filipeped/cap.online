@@ -4,7 +4,7 @@ import crypto from "crypto";
 // --- CONSTANTES ---
 const PIXEL_ID = "1142320931265624";
 // ATENÇÃO: O ACCESS_TOKEN que você colou é diferente do anterior. Estou usando este mais recente.
-const ACCESS_TOKEN = "EAAQfmxkTTZCcBPOCpW8S1JD2a5QcRTUO4ZCeUzf8q6g45wUgZA4oTZArNMZBDuaEDFU9pjTmntnZC7jy3iH9i1bXgOyqPra8anW8nFAx1aqHE8wo1ohbam3L8ur2l3iPDxEFANz4GCAhDZCe7Iq7XYX5SyBNU2ZCjji9gV9lCLJq3YIgZCJmp0Dc02sBn7DT6TAZDZD";
+const ACCESS_TOKEN = "EAAQfmxkTTZCcBPCcK9Y5EIqESZAeViRWtGzNKE15ZBpuZChT9jykNhH7RDavKevSMgIcdNihreTdZBnXpr5Pm0WP0ZBDiOGf65jvs3oXPZA9VpoSluLJgqPtRk4ZAfK7zulurejZCsI09q2hLbe6ygVpIJb2ButYlDNVdgOXw7AZBTDwQpFLzvg4R6Q82dVHsa0AZDZD";
 const META_URL = `https://graph.facebook.com/v19.0/${PIXEL_ID}/events`;
 
 // --- FUNÇÕES AUXILIARES OTIMIZADAS ---
