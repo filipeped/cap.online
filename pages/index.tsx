@@ -14,7 +14,7 @@ export default function Home() {
       event_name: "Lead",
       event_time: Math.floor(Date.now() / 1000),
       action_source: "website",
-      event_source_url: "https://www.digitalpaisagismo.com",
+      event_source_url: "https://www.digitalpaisagismo.com.br",
       user_data: {
         external_id: "dec28dba1ef8f7a974d0daa5fb417e886d608ff870dea037176fafd3ef931045",
         client_ip_address: "177.155.123.123",
@@ -35,8 +35,8 @@ export default function Home() {
 
     const payload = {
       data: [event],
-      pixel_id: "1802124647065004",
-      access_token: "EAAQfmxkTTZCcBPKseK7aMXRymZBlmaBcxYDZAi6msJWMZCKzkn0EAmNqKYWJvO7UZBzptrIJv4Sm6eZB6JYhwGqzKUaKZCfdTojLqlQpfplibkSZAMwK2YYiZAQbV1xJhdzebn8AIBk4ovTvkNSZBhG6oujGjITo2uSUY6P96mfFz9f6OXKEWX9FczbNDBuQefdQZDZD"
+      pixel_id: "1142320931265624",
+      access_token: "EAAQfmxkTTZCcBPJqdYzaTyZB5WWFIMaXGDF9WhWWbgbO4jhifEM5l25TvjYzaBPT3QoZBiYG5cIxJnpHIQrxZCX7HUOlXcXX5yrCbdJIOD8fBcZAIpM9QSwiGo4gYTZA3AAtdrM5V38LLt4td6oW6ou6eCGzecRZBfSIev4yH258aQEZBdR3gBrgFrQZBAOoJTQZDZD"
     };
 
     try {
